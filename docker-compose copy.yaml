@@ -1,0 +1,31 @@
+version: '3'
+services:
+  nsqlookupd: # 守护进程，调度消息工人
+    image: nsqio/nsq
+    command: /nsqlookupd
+    restart: always
+    ports:
+      - "4160:4160"
+      - "4161:4161"
+  nsqd: # 消息工人，收发消息
+    image: nsqio/nsq
+    command: /nsqd -data-path=/data --lookupd-tcp-address=nsqlookupd:4160 --broadcast-address=192.168.100.63 --auth-http-address=nsq-auth:1325
+    depends_on:
+      - nsqlookupd
+    volumes:
+      - /Users/jiangjin/Documents/02_proxy/nsq/data:/data
+    ports:
+      - "4150:4150"
+      - "4151:4151"
+    restart: always
+  nsqadmin: # 后台管理
+    image: nsqio/nsq
+    command: /nsqadmin --lookupd-http-address=nsqlookupd:4161
+    depends_on:
+      - nsqlookupd  
+    ports:
+      - "4171:4171"
+  nsq-auth: # 鉴权服务
+    image: zhimiao/nsq-auth:latest
+    restart: always
+    command: --secret="9dq5I5G6Ff4Am1Zf" # 秘钥
